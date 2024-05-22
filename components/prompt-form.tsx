@@ -1,10 +1,6 @@
-'use client'
-
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
-
 import { useActions, useUIState } from 'ai/rsc'
-
 import { UserMessage } from './stocks/message'
 import { type AI } from '@/lib/chat/actions'
 import { Button } from '@/components/ui/button'
@@ -28,6 +24,7 @@ export function PromptForm({
   const router = useRouter()
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
@@ -36,6 +33,14 @@ export function PromptForm({
       inputRef.current.focus()
     }
   }, [])
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Handle file upload here
+      // You can submit the file to your backend or process it as needed
+    }
+  }
 
   return (
     <form
@@ -109,6 +114,24 @@ export function PromptForm({
             <TooltipContent>Send message</TooltipContent>
           </Tooltip>
         </div>
+
+
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".jpg,.jpeg,.png,.gif, .pdf"
+          className="hidden"
+          onChange={handleFileInputChange}
+        />
+        <Button
+          size="icon"
+          className="absolute right-10 top-[13px] sm:right-20"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <IconPlus />
+          <span className="sr-only">Upload file</span>
+        </Button>
       </div>
     </form>
   )

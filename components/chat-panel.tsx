@@ -36,24 +36,24 @@ export function ChatPanel({
 
   const exampleMessages = [
     {
-      heading: 'What are the',
-      subheading: 'trending memecoins today?',
-      message: `What are the trending memecoins today?`
+      heading: 'Who is the',
+      subheading: 'G.O.A.T. in the NBA?',
+      message: `Who is the greatest of all time in the NBA?`
     },
     {
-      heading: 'What is the price of',
-      subheading: '$DOGE right now?',
-      message: 'What is the price of $DOGE right now?'
+      heading: 'How many years',
+      subheading: 'did Tom Brady play in the NFL?',
+      message: 'How many years did Tom Brady play in the NFL?'
     },
     {
-      heading: 'I would like to buy',
-      subheading: '42 $DOGE',
-      message: `I would like to buy 42 $DOGE`
+      heading: 'What is the best',
+      subheading:'best sports team near me?',
+      message: 'What are the best sports teams near me?'
     },
     {
-      heading: 'What are some',
-      subheading: `recent events about $DOGE?`,
-      message: `What are some recent events about $DOGE?`
+      heading: 'How much did',
+      subheading: `Michael Jordan average during his career?`,
+      message: `How much did Michael Jordan average during his career?`
     }
   ]
 
