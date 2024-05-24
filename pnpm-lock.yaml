@@ -62,6 +62,9 @@ dependencies:
   date-fns:
     specifier: ^3.3.1
     version: 3.3.1
+  debug:
+    specifier: ^4.3.4
+    version: 4.3.4
   focus-trap-react:
     specifier: ^10.2.3
     version: 10.2.3(prop-types@15.8.1)(react-dom@18.2.0)(react@18.2.0)
@@ -122,6 +125,9 @@ dependencies:
   usehooks-ts:
     specifier: ^2.16.0
     version: 2.16.0(react@18.2.0)
+  uuid:
+    specifier: ^9.0.1
+    version: 9.0.1
   vercel:
     specifier: ^34.2.0
     version: 34.2.0
@@ -6816,6 +6822,11 @@ packages:
   /uuid@3.3.2:
     resolution: {integrity: sha512-yXJmeNaw3DnnKAOKJE51sL/ZaYfWJRl1pK9dr19YFCu0ObS231AB1/LbqTKRAQ5kw8A90rA6fr4riOUpTZvQZA==}
     deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+    hasBin: true
+    dev: false
+
+  /uuid@9.0.1:
+    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     hasBin: true
     dev: false
 
