@@ -21,6 +21,7 @@ import { Events } from '@/components/stocks/events';
 import { StocksSkeleton } from '@/components/stocks/stocks-skeleton';
 import { Stocks } from '@/components/stocks/stocks';
 import { StockSkeleton } from '@/components/stocks/stock-skeleton';
+import fs from 'fs';
 import {
   formatNumber,
   runAsyncFnWithoutBlocking,
@@ -34,7 +35,6 @@ import { auth } from '@/auth';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
-  
 });
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
@@ -107,7 +107,14 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   };
 }
 
-async function submitUserMessage(content: string) {
+async function uploadFileToVectorStore(buffer: Buffer) {
+  const vectorStore = await openai.beta.vectorStores.create({ name: 'User Files' });
+  await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, [buffer]);
+
+  return vectorStore.id;
+}
+
+async function submitUserMessage(content: string, file?: { name: string; arrayBuffer: ArrayBuffer }) {
   'use server';
 
   const aiState = getMutableAIState<typeof AI>();
@@ -119,18 +126,27 @@ async function submitUserMessage(content: string) {
       {
         id: nanoid(),
         role: 'user',
-        content
-      }
-    ]
+        content: content || (file ? `File uploaded: ${file.name}` : ''),
+      },
+    ],
   });
 
+  let fileId = null;
+  if (file) {
+    try {
+      const buffer = Buffer.from(file.arrayBuffer);
+      fileId = await uploadFileToVectorStore(buffer);
+    } catch (error) {
+      console.error('File upload failed:', error);
+      return null;
+    }
+  }
+
   try {
-    // Create a new thread for the conversation
     const thread = await openai.beta.threads.create();
 
-    // Create a textStream to manage the assistant's response
-    let textStream: undefined | ReturnType<typeof createStreamableValue<string>>;
-    let textNode: undefined | React.ReactNode;
+    let textStream: any;
+    let textNode;
 
     const updateTextStream = (content: string) => {
       if (!textStream) {
@@ -140,41 +156,36 @@ async function submitUserMessage(content: string) {
 
       textStream.update(content);
     };
-
-    // Add the user's message to the thread
     await openai.beta.threads.messages.create(thread.id, {
       role: 'user',
-      content
+      content,
     });
 
-    // Run the assistant on the thread
-    let run = await openai.beta.threads.runs.createAndPoll(
-      thread.id,
-      {
-        assistant_id: 'asst_LLM5oKBkS41QIduCEJmtN09e'
-      }
-    );
+    if (fileId) {
+      await openai.beta.threads.messages.create(thread.id, {
+        role: 'user',
+        content: `file://${fileId}`,
+      });
+    }
+
+    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+      assistant_id: 'asst_LLM5oKBkS41QIduCEJmtN09e',
+    });
 
     if (run.status === 'completed') {
-      // Fetch the messages from the completed run
       const messages = await openai.beta.threads.messages.list(run.thread_id);
-
-      // Get the assistant's response from the messages
-      const assistantMessage = messages.data.find(
-        message => message.role === 'assistant'
-      );
+      const assistantMessage = messages.data.find((message) => message.role === 'assistant');
 
       if (assistantMessage && assistantMessage.content) {
-        // Extract the assistant's text response
         let assistantResponse = assistantMessage.content
-          .map(contentItem => JSON.stringify(contentItem))
+          .map((contentItem) => JSON.stringify(contentItem))
           .join(' ');
 
-          assistantResponse = assistantResponse
-          .replace(/{"type":"text","text":{"value":"/g, '') 
-          .replace(/","annotations":\[\]}}/g, '');
+        assistantResponse = assistantResponse
+          .replace(/{"type":"text","text":{"value":"/g, '')
+          .replace(/","annotations":\[\]}}/g, '')
+          .replace(/\n\n/g, '');
 
-        // Update the AI state with the assistant's response
         aiState.update({
           ...aiState.get(),
           messages: [
@@ -182,21 +193,23 @@ async function submitUserMessage(content: string) {
             {
               id: nanoid(),
               role: 'assistant',
-              content: assistantResponse
-            }
-          ]
+              content: assistantResponse,
+            },
+          ],
         });
 
-        // Update the textStream with the assistant's response
         updateTextStream(assistantResponse);
 
-        // Return the response to be displayed in the UI
+        if (textStream) {
+          textStream.done();
+        }
+
         return {
           id: nanoid(),
-          display: textNode
+          display: textNode,
         };
-      } 
-    } 
+      }
+    }
   } catch (error) {
     console.error('Error communicating with the assistant API:', error);
     return null;

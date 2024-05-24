@@ -1,76 +1,76 @@
-import * as React from 'react'
-import Textarea from 'react-textarea-autosize'
-import { useActions, useUIState } from 'ai/rsc'
-import { UserMessage } from './stocks/message'
-import { type AI } from '@/lib/chat/actions'
-import { Button } from '@/components/ui/button'
-import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
-import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
-import { nanoid } from 'nanoid'
-import { useRouter } from 'next/navigation'
+import * as React from 'react';
+import Textarea from 'react-textarea-autosize';
+import { useActions, useUIState } from 'ai/rsc';
+import { UserMessage } from './stocks/message';
+import { Button } from '@/components/ui/button';
+import { IconArrowElbow, IconPlus } from '@/components/ui/icons';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useEnterSubmit } from '@/lib/hooks/use-enter-submit';
+import { nanoid } from 'nanoid';
+import { useRouter } from 'next/navigation';
+import { AI } from '@/lib/chat/actions';
 
 export function PromptForm({
   input,
-  setInput
+  setInput,
 }: {
-  input: string
-  setInput: (value: string) => void
+  input: string;
+  setInput: (value: string) => void;
 }) {
-  const router = useRouter()
-  const { formRef, onKeyDown } = useEnterSubmit()
-  const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const { submitUserMessage } = useActions()
-  const [_, setMessages] = useUIState<typeof AI>()
+  const router = useRouter();
+  const { formRef, onKeyDown } = useEnterSubmit();
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { submitUserMessage } = useActions();
+  const [_, setMessages] = useUIState<typeof AI>();
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
 
   React.useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.focus()
+      inputRef.current.focus();
     }
-  }, [])
+  }, []);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files[0]
-    if (file) {
-      // Handle file upload here
-      // You can submit the file to your backend or process it as needed
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const value = input.trim();
+    setInput('');
+    setSelectedFile(null);
+    if (!value && !selectedFile) return;
+
+    // Optimistically add user message UI
+    setMessages((currentMessages: any) => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value || (selectedFile ? selectedFile.name : '')}</UserMessage>,
+      },
+    ]);
+
+    // Prepare file for submission
+    let fileData = null;
+    if (selectedFile) {
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      fileData = { name: selectedFile.name, arrayBuffer };
     }
-  }
+
+    // Submit and get response message
+    try {
+      const responseMessage = await submitUserMessage(value, fileData);
+      setMessages((currentMessages: any) => [...currentMessages, responseMessage]);
+    } catch (error) {
+      console.error('Error submitting user message:', error);
+    }
+  };
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={async (e: any) => {
-        e.preventDefault()
-
-        // Blur focus on mobile
-        if (window.innerWidth < 600) {
-          e.target['message']?.blur()
-        }
-
-        const value = input.trim()
-        setInput('')
-        if (!value) return
-
-        // Optimistically add user message UI
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{value}</UserMessage>
-          }
-        ])
-
-        // Submit and get response message
-        const responseMessage = await submitUserMessage(value)
-        setMessages(currentMessages => [...currentMessages, responseMessage])
-      }}
-    >
+    <form ref={formRef} onSubmit={handleSubmit}>
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -79,7 +79,7 @@ export function PromptForm({
               size="icon"
               className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
               onClick={() => {
-                router.push('/new')
+                router.push('/new');
               }}
             >
               <IconPlus />
@@ -101,12 +101,12 @@ export function PromptForm({
           name="message"
           rows={1}
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
         />
         <div className="absolute right-0 top-[13px] sm:right-4">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button type="submit" size="icon" disabled={input === ''}>
+              <Button type="submit" size="icon" disabled={input === '' && !selectedFile}>
                 <IconArrowElbow />
                 <span className="sr-only">Send message</span>
               </Button>
@@ -114,13 +114,10 @@ export function PromptForm({
             <TooltipContent>Send message</TooltipContent>
           </Tooltip>
         </div>
-
-
-        
         <input
           ref={fileInputRef}
           type="file"
-          accept=".jpg,.jpeg,.png,.gif, .pdf"
+          accept=".pdf,.txt"
           className="hidden"
           onChange={handleFileInputChange}
         />
@@ -134,5 +131,5 @@ export function PromptForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }
