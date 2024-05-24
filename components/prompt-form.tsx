@@ -4,6 +4,7 @@ import { useActions, useUIState } from 'ai/rsc';
 import { UserMessage } from './stocks/message';
 import { Button } from '@/components/ui/button';
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons';
+import { FaPaperclip } from 'react-icons/fa'; // Import the paperclip icon from react-icons
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit';
 import { nanoid } from 'nanoid';
@@ -117,16 +118,19 @@ export function PromptForm({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.txt"
+          accept=".pdf,.png, .txt, .jpg"
           className="hidden"
           onChange={handleFileInputChange}
         />
+      </div>
+      <div className="flex justify-center mt-4">
         <Button
-          size="icon"
-          className="absolute right-10 top-[13px] sm:right-20"
+          variant="outline"
+          className="flex items-center px-4 py-2"
           onClick={() => fileInputRef.current?.click()}
         >
-          <IconPlus />
+          <FaPaperclip className="mr-2" />
+          Add files
           <span className="sr-only">Upload file</span>
         </Button>
       </div>
