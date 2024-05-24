@@ -109,7 +109,7 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
 
 async function uploadFileToVectorStore(buffer: Buffer) {
   const vectorStore = await openai.beta.vectorStores.create({ name: 'User Files' });
-  await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, [buffer]);
+  // await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, [buffer]);
 
   return vectorStore.id;
 }
